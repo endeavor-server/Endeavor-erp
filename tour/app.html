@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endeavor CRM</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: #1e3a5f;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-item.active {
+            background: #3b82f6;
+        }
+        .main {
+            margin-left: 260px;
+            flex: 1;
+            padding: 32px;
+        }
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #1e3a5f;
+            margin-bottom: 8px;
+        }
+        .header p { color: #64748b; }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        .stat-change {
+            font-size: 13px;
+            color: #10b981;
+            margin-top: 4px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .pipeline {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .pipeline-stage {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .pipeline-stage:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .pipeline-stage h4 {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .pipeline-count {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        .activity-item, .contact-item, .lead-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .activity-item:last-child, .contact-item:last-child, .lead-item:last-child {
+            border-bottom: none;
+        }
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .bg-blue { background: #dbeafe; }
+        .bg-green { background: #d1fae5; }
+        .bg-purple { background: #ede9fe; }
+        .bg-orange { background: #ffedd5; }
+        .bg-red { background: #fee2e2; }
+        .bg-yellow { background: #fef3c7; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal h2 { margin-bottom: 20px; color: #1e3a5f; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover { background: #d1d5db; }
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .delete-btn {
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .delete-btn:hover { background: #fee2e2; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px;
+            color: #64748b;
+            font-weight: 500;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-new { background: #dbeafe; color: #1e40af; }
+        .status-contacted { background: #fef3c7; color: #92400e; }
+        .status-qualified { background: #d1fae5; color: #065f46; }
+        .status-proposal { background: #ede9fe; color: #5b21b6; }
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const mockContacts = [
+            { id: 1, name: "John Smith", email: "john@acme.com", company: "Acme Inc", phone: "+1 555-0123" },
+            { id: 2, name: "Sarah Johnson", email: "sarah@techcorp.com", company: "TechCorp", phone: "+1 555-0124" },
+            { id: 3, name: "Mike Chen", email: "mike@globalsol.com", company: "Global Solutions", phone: "+1 555-0125" },
+            { id: 4, name: "Emily Davis", email: "emily@innovate.com", company: "Innovate Co", phone: "+1 555-0126" },
+        ];
+
+        const mockLeads = [
+            { id: 1, name: "Acme Corp", contact: "John Doe", value: "$50,000", status: "new" },
+            { id: 2, name: "TechStart Inc", contact: "Jane Smith", value: "$25,000", status: "contacted" },
+            { id: 3, name: "Global Biz", contact: "Bob Wilson", value: "$100,000", status: "qualified" },
+            { id: 4, name: "Innovate Ltd", contact: "Alice Brown", value: "$75,000", status: "proposal" },
+            { id: 5, name: "Future Co", contact: "Charlie Day", value: "$30,000", status: "closed" },
+        ];
+
+        function Sidebar({ currentView, setCurrentView }) {
+            const items = [
+                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+                { id: 'contacts', label: 'Contacts', icon: '👥' },
+                { id: 'leads', label: 'Leads', icon: '🎯' },
+                { id: 'deals', label: 'Deals', icon: '💼' },
+                { id: 'tasks', label: 'Tasks', icon: '✅' },
+            ];
+            return (
+                <aside className="sidebar">
+                    <div className="logo">🚀 Endeavor CRM</div>
+                    <nav>
+                        {items.map(item => (
+                            <div
+                                key={item.id}
+                                className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+                                onClick={() => setCurrentView(item.id)}
+                            >
+                                {item.icon} {item.label}
+                            </div>
+                        ))}
+                    </nav>
+                </aside>
+            );
+        }
+
+        function Dashboard({ setView }) {
+            return (
+                <>
+                    <div className="header">
+                        <div>
+                            <h1>Dashboard</h1>
+                            <p>Overview of your sales performance</p>
+                        </div>
+                        <button className="btn" onClick={() => setView('contacts')}>+ Add Contact</button>
+                    </div>
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-label">Total Contacts</div>
+                            <div className="stat-value">1,248</div>
+                            <div className="stat-change">↑ 12% from last month</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Active Leads</div>
+                            <div className="stat-value">86</div>
+                            <div className="stat-change">↑ 8% from last month</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Open Deals</div>
+                            <div className="stat-value">42</div>
+                            <div className="stat-change">↑ 15% from last month</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Deal Value</div>
+                            <div className="stat-value">$2.4M</div>
+                            <div className="stat-change">↑ 23% from last month</div>
+                        </div>
+                    </div>
+                    <div className="content-grid">
+                        <div className="card">
+                            <h3>Sales Pipeline</h3>
+                            <div className="pipeline">
+                                {['New', 'Contacted', 'Qualified', 'Proposal', 'Closed'].map(stage => (
+                                    <div key={stage} className="pipeline-stage" onClick={() => setView('leads')}>
+                                        <h4>{stage}</h4>
+                                        <div className="pipeline-count">{Math.floor(Math.random() * 20) + 5}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="card">
+                            <h3>Quick Actions</h3>
+                            <div className="activity-item" style={{cursor: 'pointer'}} onClick={() => setView('contacts')}>
+                                <div className="icon-circle bg-blue">➕</div>
+                                <div><strong>Add New Contact</strong></div>
+                            </div>
+                            <div className="activity-item" style={{cursor: 'pointer'}} onClick={() => setView('leads')}>
+                                <div className="icon-circle bg-green">🎯</div>
+                                <div><strong>Create Lead</strong></div>
+                            </div>
+                            <div className="activity-item" style={{cursor: 'pointer'}} onClick={() => setView('deals')}>
+                                <div className="icon-circle bg-purple">💼</div>
+                                <div><strong>Add Deal</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function Contacts() {
+            const [contacts, setContacts] = useState(mockContacts);
+            const [showModal, setShowModal] = useState(false);
+            const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
+
+            const handleAdd = () => {
+                if (newContact.name && newContact.email) {
+                    setContacts([...contacts, { ...newContact, id: Date.now() }]);
+                    setNewContact({ name: '', email: '', company: '', phone: '' });
+                    setShowModal(false);
+                }
+            };
+
+            const handleDelete = (id) => {
+                setContacts(contacts.filter(c => c.id !== id));
+            };
+
+            return (
+                <>
+                    <div className="header">
+                        <div><h1>Contacts</h1><p>Manage your contacts and customers</p></div>
+                        <button className="btn" onClick={() => setShowModal(true)}>+ Add Contact</button>
+                    </div>
+                    <div className="card">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Company</th>
+                                    <th>Phone</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {contacts.map(contact => (
+                                    <tr key={contact.id}>
+                                        <td>
+                                            <div className="contact-item">
+                                                <div className="contact-avatar">{contact.name.charAt(0)}</div>
+                                                {contact.name}
+                                            </div>
+                                        </td>
+                                        <td>{contact.email}</td>
+                                        <td>{contact.company}</td>
+                                        <td>{contact.phone}</td>
+                                        <td>
+                                            <span className="delete-btn" onClick={() => handleDelete(contact.id)}>🗑️ Delete</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className={`modal ${showModal ? 'active' : ''}`}>
+                        <div className="modal-content">
+                            <h2>Add Contact</h2>
+                            <div className="form-group">
+                                <label>Name</label>
+                                <input value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Company</label>
+                                <input value={newContact.company} onChange={e => setNewContact({...newContact, company: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Phone</label>
+                                <input value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} />
+                            </div>
+                            <div className="modal-buttons">
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button className="btn" onClick={handleAdd}>Save Contact</button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function Leads() {
+            const [leads, setLeads] = useState(mockLeads);
+            const [showModal, setShowModal] = useState(false);
+            const [newLead, setNewLead] = useState({ name: '', contact: '', value: '', status: 'new' });
+
+            const handleAdd = () => {
+                if (newLead.name) {
+                    setLeads([...leads, { ...newLead, id: Date.now() }]);
+                    setNewLead({ name: '', contact: '', value: '', status: 'new' });
+                    setShowModal(false);
+                }
+            };
+
+            const handleStatusChange = (id, newStatus) => {
+                setLeads(leads.map(l => l.id === id ? { ...l, status: newStatus } : l));
+            };
+
+            return (
+                <>
+                    <div className="header">
+                        <div><h1>Leads</h1><p>Track and manage your sales pipeline</p></div>
+                        <button className="btn" onClick={() => setShowModal(true)}>+ Add Lead</button>
+                    </div>
+                    <div className="card">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Contact</th>
+                                    <th>Value</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leads.map(lead => (
+                                    <tr key={lead.id}>
+                                        <td><strong>{lead.name}</strong></td>
+                                        <td>{lead.contact}</td>
+                                        <td>{lead.value}</td>
+                                        <td><span className={`status-badge status-${lead.status}`}>{lead.status}</span></td>
+                                        <td>
+                                            <select value={lead.status} onChange={e => handleStatusChange(lead.id, e.target.value)}>
+                                                <option value="new">New</option>
+                                                <option value="contacted">Contacted</option>
+                                                <option value="qualified">Qualified</option>
+                                                <option value="proposal">Proposal</option>
+                                                <option value="closed">Closed</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className={`modal ${showModal ? 'active' : ''}`}>
+                        <div className="modal-content">
+                            <h2>Add Lead</h2>
+                            <div className="form-group">
+                                <label>Company Name</label>
+                                <input value={newLead.name} onChange={e => setNewLead({...newLead, name: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Contact Person</label>
+                                <input value={newLead.contact} onChange={e => setNewLead({...newLead, contact: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Deal Value</label>
+                                <input value={newLead.value} onChange={e => setNewLead({...newLead, value: e.target.value})} placeholder="$50,000" />
+                            </div>
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select value={newLead.status} onChange={e => setNewLead({...newLead, status: e.target.value})}>
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="proposal">Proposal</option>
+                                </select>
+                            </div>
+                            <div className="modal-buttons">
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button className="btn btn-success" onClick={handleAdd}>Add Lead</button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function Deals() {
+            return (
+                <>
+                    <div className="header">
+                        <div><h1>Deals</h1><p>Monitor your opportunities and revenue</p></div>
+                        <button className="btn">+ New Deal</button>
+                    </div>
+                    <div className="card">
+                        <h3>Active Deals</h3>
+                        {mockLeads.filter(l => l.status !== 'closed').map(deal => (
+                            <div key={deal.id} className="lead-item">
+                                <div className="icon-circle bg-green">💰</div>
+                                <div style={{flex: 1}}>
+                                    <div style={{fontWeight: 600}}>{deal.name}</div>
+                                    <div style={{fontSize: 13, color: '#64748b'}}>{deal.contact}</div>
+                                </div>
+                                <div style={{fontWeight: 700, color: '#1e3a5f'}}>{deal.value}</div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            );
+        }
+
+        function Tasks() {
+            const [tasks, setTasks] = useState([
+                { id: 1, title: 'Follow up with Acme Inc', completed: false, priority: 'high' },
+                { id: 2, title: 'Send proposal to TechStart', completed: false, priority: 'medium' },
+                { id: 3, title: 'Schedule demo for Global Biz', completed: true, priority: 'low' },
+            ]);
+            const [newTask, setNewTask] = useState('');
+
+            const toggleTask = (id) => {
+                setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+            };
+
+            const addTask = () => {
+                if (newTask) {
+                    setTasks([...tasks, { id: Date.now(), title: newTask, completed: false, priority: 'medium' }]);
+                    setNewTask('');
+                }
+            };
+
+            return (
+                <>
+                    <div className="header">
+                        <div><h1>Tasks</h1><p>Stay on top of your to-do list</p></div>
+                    </div>
+                    <div className="search-bar">
+                        <input
+                            placeholder="Add a new task..."
+                            value={newTask}
+                            onChange={e => setNewTask(e.target.value)}
+                            onKeyPress={e => e.key === 'Enter' && addTask()}
+                        />
+                        <button className="btn" onClick={addTask}>Add Task</button>
+                    </div>
+                    <div className="card">
+                        {tasks.map(task => (
+                            <div key={task.id} className="activity-item" style={{textDecoration: task.completed ? 'line-through' : 'none'}}>
+                                <input
+                                    type="checkbox"
+                                    checked={task.completed}
+                                    onChange={() => toggleTask(task.id)}
+                                    style={{width: 20, height: 20}}
+                                />
+                                <div style={{flex: 1}}>{task.title}</div>
+                                <span className={`status-badge status-${task.priority === 'high' ? 'new' : task.priority === 'medium' ? 'contacted' : 'qualified'}`}>
+                                    {task.priority}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            );
+        }
+
+        function App() {
+            const [currentView, setCurrentView] = useState('dashboard');
+
+            const renderView = () => {
+                switch(currentView) {
+                    case 'dashboard': return <Dashboard setView={setCurrentView} />;
+                    case 'contacts': return <Contacts />;
+                    case 'leads': return <Leads />;
+                    case 'deals': return <Deals />;
+                    case 'tasks': return <Tasks />;
+                    default: return <Dashboard setView={setCurrentView} />;
+                }
+            };
+
+            return (
+                <div className="app">
+                    <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+                    <main className="main">{renderView()}</main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

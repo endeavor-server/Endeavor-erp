@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endeavor SUPER CRM</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #0E1117;
+            --surface: #161B22;
+            --surface-hover: #1C2128;
+            --border: #2A2F3A;
+            --border-hover: #3B4250;
+            --primary: #3B82F6;
+            --primary-hover: #2563EB;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --text-primary: #E5E7EB;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            font-size: 13px;
+            transition: all 150ms;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 150ms;
+            margin: 2px 0;
+        }
+        .nav-item:hover {
+            background: var(--surface-hover);
+        }
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+        .badge-success { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-error { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .badge-info { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+        input, select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+        tr:hover td { background: var(--surface-hover); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ============================================
+        // MOCK DATA
+        // ============================================
+        const clients = [
+            { id: 1, name: "TechCorp India", contact: "Rajesh Kumar", value: "₹25L", status: "active", industry: "IT" },
+            { id: 2, name: "EduLearn Academy", contact: "Priya Sharma", value: "₹18L", status: "active", industry: "Education" },
+            { id: 3, name: "HealthPlus Medical", contact: "Dr. Mehta", value: "₹12L", status: "at-risk", industry: "Healthcare" },
+            { id: 4, name: "Global Solutions", contact: "Amit Patel", value: "₹45L", status: "active", industry: "Consulting" },
+        ];
+
+        const freelancers = [
+            { id: 1, name: "Sarah Johnson", skills: ["React", "AI"], rate: "₹3,500/hr", rating: 4.9, available: true },
+            { id: 2, name: "David Chen", skills: ["UI/UX", "Figma"], rate: "₹2,800/hr", rating: 4.7, available: true },
+            { id: 3, name: "Maria Garcia", skills: ["Content", "SEO"], rate: "₹1,800/hr", rating: 4.8, available: false },
+            { id: 4, name: "James Wilson", skills: ["Python", "ML"], rate: "₹4,200/hr", rating: 5.0, available: true },
+        ];
+
+        const deals = [
+            { id: 1, company: "TechCorp India", value: 2500000, stage: "proposal", prob: 75 },
+            { id: 2, company: "EduLearn", value: 1800000, stage: "qualified", prob: 60 },
+            { id: 3, company: "Global Sol", value: 4500000, stage: "negotiation", prob: 90 },
+            { id: 4, company: "HealthPlus", value: 1200000, stage: "new", prob: 25 },
+        ];
+
+        const invoices = [
+            { id: "INV-001", client: "TechCorp", amount: "₹5,20,000", gst: "18%", tds: "₹52,000", status: "paid" },
+            { id: "INV-002", client: "EduLearn", amount: "₹3,80,000", gst: "18%", tds: "₹38,000", status: "pending" },
+            { id: "INV-003", client: "HealthPlus", amount: "₹2,10,000", gst: "12%", tds: "₹21,000", status: "overdue" },
+        ];
+
+        // ============================================
+        // COMPONENTS
+        // ============================================
+
+        function Sidebar({ currentView, setView }) {
+            const nav = [
+                { id: 'dashboard', label: 'Command Center', icon: '⌘', section: 'Home' },
+                { id: 'clients', label: 'Clients', icon: '👥', section: 'Business' },
+                { id: 'work', label: 'Work & Delivery', icon: '📦' },
+                { id: 'people', label: 'People', icon: '👨‍💼' },
+                { id: 'finance', label: 'Finance', icon: '💰', section: 'Operations' },
+                { id: 'sales', label: 'Sales', icon: '📈' },
+                { id: 'ai', label: 'AI & Automation', icon: '🤖', section: 'Intelligence' },
+            ];
+
+            const grouped = nav.reduce((acc, item) => {
+                const sec = item.section || 'Other';
+                if (!acc[sec]) acc[sec] = [];
+                acc[sec].push(item);
+                return acc;
+            }, {});
+
+            return (
+                <aside className="w-64 fixed h-full flex flex-col" style={{background: 'var(--surface)', borderRight: '1px solid var(--border)'}}>
+                    <div className="p-5 border-b" style={{borderColor: 'var(--border)'}}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{background: 'linear-gradient(135deg, #3B82F6, #1d4ed8)'}}>
+                                🚀
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-lg" style={{color: 'var(--text-primary)'}}>Endeavor</h1>
+                                <p className="text-xs" style={{color: 'var(--text-muted)'}}>Business OS</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <nav className="flex-1 overflow-y-auto p-3">
+                        {Object.entries(grouped).map(([section, items]) => (
+                            <div key={section} className="mb-5">
+                                <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2 px-3" style={{color: 'var(--text-muted)'}}>
+                                    {section}
+                                </h3>
+                                {items.map(item => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => setView(item.id)}
+                                        className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+                                        style={{color: currentView === item.id ? 'var(--primary)' : 'var(--text-secondary)'}}
+                                    >
+                                        <span className="text-lg">{item.icon}</span>
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        {item.id === 'dashboard' && (
+                                            <span className="ml-auto flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full" style={{background: 'var(--success)'}}></span>
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </nav>
+
+                    <div className="p-4 border-t" style={{borderColor: 'var(--border)'}}>
+                        <div className="flex items-center gap-3 p-2 rounded-lg" style={{cursor: 'pointer'}}>
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center font-semibold text-sm" style={{background: 'linear-gradient(135deg, #3B82F6, #9333ea)'}}>
+                                NA
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium" style={{color: 'var(--text-primary)'}}>Nikhil Admin</p>
+                                <p className="text-xs" style={{color: 'var(--text-muted)'}}>Super Admin</p>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            );
+        }
+
+        function Header({ title, subtitle }) {
+            return (
+                <header className="h-16 flex items-center justify-between px-6 sticky top-0 z-10" style={{background: 'var(--bg)', borderBottom: '1px solid var(--border)'}}>
+                    <div>
+                        <h1 className="text-[15px] font-semibold" style={{color: 'var(--text-primary)'}}>{title}</h1>
+                        <p className="text-xs" style={{color: 'var(--text-muted)'}}>{subtitle}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{color: 'var(--text-muted)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" placeholder="Search anything..." className="pl-10 pr-4 py-2 w-64" style={{background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)'}} />
+                        </div>
+                        <button className="p-2 rounded-lg" style={{color: 'var(--text-secondary)'}}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </button>
+                    </div>
+                </header>
+            );
+        }
+
+        function StatsGrid() {
+            const stats = [
+                { label: 'Revenue MTD', value: '₹42.5L', change: '+12%', up: true },
+                { label: 'Active Deals', value: '₹12.4Cr', change: '+18%', up: true },
+                { label: 'Utilization', value: '84%', change: '-3%', up: false },
+                { label: 'On-time Delivery', value: '94%', change: '+4%', up: true },
+            ];
+
+            return (
+                <div className="stats-grid">
+                    {stats.map((s, i) => (
+                        <div key={i} className="card p-5">
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>{s.label}</p>
+                                <span className={`text-xs font-medium ${s.up ? 'badge-success' : 'badge-error'}`} style={{padding: '4px 8px', borderRadius: '6px'}}>
+                                    {s.up ? '↑' : '↓'} {s.change}
+                                </span>
+                            </div>
+                            <p className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>{s.value}</p>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function Dashboard() {
+            return (
+                <div className="space-y-6">
+                    <StatsGrid />
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="card p-5">
+                            <h3 className="font-semibold mb-4 flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                <span className="w-2 h-2 rounded-full" style={{background: 'var(--warning)'}}></span>
+                                Risk Radar
+                            </h3>
+                            <div className="space-y-3">
+                                {[
+                                    { msg: '3 delayed invoices pending ₹8.5L', level: 'high', action: 'Review' },
+                                    { msg: 'GST filing due in 4 days', level: 'high', action: 'Prepare' },
+                                    { msg: 'Client XYZ scope exceeded by 18%', level: 'medium', action: 'Renegotiate' },
+                                ].map((r, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-lg" style={{background: 'var(--bg)', border: '1px solid var(--border)'}}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-2 h-2 rounded-full" style={{background: r.level === 'high' ? 'var(--error)' : r.level === 'medium' ? 'var(--warning)' : 'var(--success)'}}></span>
+                                            <span className="text-sm" style={{color: 'var(--text-primary)'}}>{r.msg}</span>
+                                        </div>
+                                        <button className="btn btn-secondary text-xs">{r.action}</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card p-5">
+                            <h3 className="font-semibold mb-4 flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                <span className="w-2 h-2 rounded-full" style={{background: 'var(--success)'}}></span>
+                                Action Feed
+                            </h3>
+                            <div className="space-y-3">
+                                {[
+                                    { icon: '💰', title: '3 freelancers pending payout', sub: '₹1.2L - Approve by EOD', pri: 'high', time: '2h ago' },
+                                    { icon: '💼', title: 'Client proposal pending', sub: 'EdTech project - ₹25L', pri: 'medium', time: '4h ago' },
+                                    { icon: '⚠️', title: 'Timesheet approval overdue', sub: '12 freelancers', pri: 'high', time: '1d ago' },
+                                ].map((a, i) => (
+                                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{background: 'var(--bg)', border: '1px solid var(--border)'}}>
+                                        <span className="text-xl">{a.icon}</span>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium" style={{color: 'var(--text-primary)'}}>{a.title}</span>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${a.pri === 'high' ? 'badge-error' : a.pri === 'medium' ? 'badge-warning' : 'badge-success'}`}>{a.pri}</span>
+                                            </div>
+                                            <p className="text-xs" style={{color: 'var(--text-muted)'}}>{a.sub}</p>
+                                        </div>
+                                        <span className="text-xs" style={{color: 'var(--text-muted)'}}>{a.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card p-6" style={{background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1))'}}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-semibold mb-1" style={{color: 'var(--text-primary)'}}>Cash Flow Forecast</h3>
+                                <p className="text-xs" style={{color: 'var(--text-muted)'}}>Next 30 days projection</p>
+                            </div>
+                            <div className="flex gap-12">
+                                <div>
+                                    <p className="text-xs" style={{color: 'var(--text-muted)'}}>Cash In</p>
+                                    <p className="text-xl font-bold" style={{color: 'var(--success)'}}>₹68.5L</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs" style={{color: 'var(--text-muted)'}}>Cash Out</p>
+                                    <p className="text-xl font-bold" style={{color: 'var(--error)'}}>₹45.2L</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs" style={{color: 'var(--text-muted)'}}>Net Position</p>
+                                    <p className="text-xl font-bold" style={{color: 'var(--primary)'}}>+₹23.3L</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ClientsView() {
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <input type="text" placeholder="Search clients..." style={{width: '300px'}} />
+                            <button className="btn btn-secondary">Filter</button>
+                        </div>
+                        <button className="btn btn-primary">+ Add Client</button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        {clients.map(c => (
+                            <div key={c.id} className="card p-5">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 className="font-semibold" style={{color: 'var(--text-primary)'}}>{c.name}</h3>
+                                        <p className="text-sm" style={{color: 'var(--text-muted)'}}>{c.contact}</p>
+                                    </div>
+                                    <span className={`text-xs px-2 py-1 rounded-full ${c.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{c.status}</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <p className="text-lg font-bold" style={{color: 'var(--text-primary)'}}>{c.value}</p>
+                                        <p className="text-xs" style={{color: 'var(--text-muted)'}}>Deal Value</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-bold" style={{color: 'var(--primary)'}}>{Math.floor(Math.random() * 10 + 1)}</p>
+                                        <p className="text-xs" style={{color: 'var(--text-muted)'}}>Projects</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-bold" style={{color: 'var(--success)'}}>94%</p>
+                                        <p className="text-xs" style={{color: 'var(--text-muted)'}}>SLA Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function PeopleView() {
+            const [tab, setTab] = useState('freelancers');
+            
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-1" style={{background: 'var(--surface)', borderRadius: '8px', padding: '4px'}}>
+                        {['employees', 'freelancers', 'contractors', 'vendors'].map(t => (
+                            <button
+                                key={t}
+                                onClick={() => setTab(t)}
+                                className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${tab === t ? 'btn-primary' : ''}`}
+                                style={tab === t ? {} : {color: 'var(--text-muted)'}}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+
+                    {tab === 'freelancers' && (
+                        <div className="card overflow-hidden">
+                            <div className="flex items-center justify-between p-4 border-b" style={{borderColor: 'var(--border)'}}>
+                                <h3 className="font-semibold" style={{color: 'var(--text-primary)'}}>Freelancer Marketplace (600+)</h3>
+                                <button className="btn btn-primary text-xs">+ Onboard Freelancer</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr style={{background: 'var(--surface)'}}>
+                                        <th>Name</th>
+                                        <th>Skills</th>
+                                        <th>Rate</th>
+                                        <th>Rating</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {freelancers.map(f => (
+                                        <tr key={f.id}>
+                                            <td>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium" style={{background: 'var(--primary)', color: 'white'}}>
+                                                        {f.name.split(' ').map(n => n[0]).join('')}
+                                                    </div>
+                                                    <span style={{color: 'var(--text-primary)'}}>{f.name}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="flex gap-1">
+                                                    {f.skills.map((s, i) => (
+                                                        <span key={i} className="text-[10px] px-2 py-0.5 rounded" style={{background: 'var(--surface)', color: 'var(--text-secondary)'}}>{s}</span>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td style={{color: 'var(--text-primary)'}}>{f.rate}</td>
+                                            <td>
+                                                <span className="flex items-center gap-1">
+                                                    <span style={{color: 'var(--warning)'}}>★</span>
+                                                    <span style={{color: 'var(--text-primary)'}}>{f.rating}</span>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`text-xs px-2 py-1 rounded-full ${f.available ? 'badge-success' : 'badge-warning'}`}>
+                                                    {f.available ? 'Available' : 'Busy'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button className="btn btn-primary text-xs">Assign</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {tab !== 'freelancers' && (
+                        <div className="card p-8 text-center">
+                            <p style={{color: 'var(--text-muted)'}}>Switch to {tab} tab to view data</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function SalesView() {
+            const [view, setView] = useState('pipeline');
+            const stages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'closed-won'];
+            
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1" style={{background: 'var(--surface)', borderRadius: '8px', padding: '4px'}}>
+                            {['pipeline', 'list', 'ai'].map(t => (
+                                <button
+                                    key={t}
+                                    onClick={() => setView(t)}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${view === t ? 'btn-primary' : ''}`}
+                                    style={view === t ? {} : {color: 'var(--text-muted)'}}
+                                >
+                                    {t === 'ai' ? 'AI Insights' : t}
+                                </button>
+                            ))}
+                        </div>
+                        <button className="btn btn-primary">+ Add Deal</button>
+                    </div>
+
+                    {view === 'pipeline' && (
+                        <div className="grid grid-cols-6 gap-4">
+                            {stages.map(stage => {
+                                const stageDeals = deals.filter(d => d.stage === stage);
+                                const colors = {
+                                    'new': '#3B82F6', 'contacted': '#8B5CF6', 'qualified': '#F59E0B',
+                                    'proposal': '#EC4899', 'negotiation': '#10B981', 'closed-won': '#22C55E'
+                                };
+                                
+                                return (
+                                    <div key={stage}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-semibold uppercase" style={{color: 'var(--text-muted)'}}>{stage.replace('-', ' ')}</span>
+                                            <span className="text-xs" style={{color: 'var(--text-muted)'}}>{stageDeals.length}</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {stageDeals.map(d => (
+                                                <div key={d.id} className="card p-4 cursor-pointer" style={{borderLeft: `3px solid ${colors[stage]}`}}>
+                                                    <p className="text-sm font-medium mb-1" style={{color: 'var(--text-primary)'}}>{d.company}</p>
+                                                    <p className="text-lg font-bold mb-2" style={{color}}>₹{(d.value/100000).toFixed(1)}L</p>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs" style={{color: 'var(--text-muted)'}}>{d.prob}% prob</span>
+                                                        {d.prob > 80 && <span className="text-xs" style={{color: 'var(--primary)'}}>AI Score: 92</span>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {view === 'ai' && (
+                        <div className="card p-6">
+                            <h3 className="font-semibold mb-4" style={{color: 'var(--text-primary)'}}>🤖 AI Suggested Actions</h3>
+                            <div className="space-y-3">
+                                {[
+                                    { action: 'Follow up with TechCorp', reason: 'No response in 5 days', conf: 92 },
+                                    { action: 'Send pricing to EduLearn', reason: 'Proposal stage, 3 days idle', conf: 88 },
+                                    { action: 'Schedule demo for HealthPlus', reason: 'High value deal, early stage', conf: 76 },
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 rounded-lg" style={{background: 'var(--bg)', border: '1px solid var(--border)'}}>
+                                        <div>
+                                            <p className="text-sm font-medium" style={{color: 'var(--text-primary)'}}>{item.action}</p>
+                                            <p className="text-xs" style={{color: 'var(--text-muted)'}}>{item.reason}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs px-2 py-1 rounded badge-info">{item.conf}% confidence</span>
+                                            <button className="btn btn-primary text-xs">Apply</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function FinanceView() {
+            const [tab, setTab] = useState('invoices');
+            
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-4 gap-4">
+                        {[
+                            { label: 'Revenue YTD', value: '₹45.2Cr', color: 'var(--success)' },
+                            { label: 'Outstanding', value: '₹8.5L', color: 'var(--warning)' },
+                            { label: 'GST Payable', value: '₹2.1L', color: 'var(--primary)' },
+                            { label: 'TDS Deducted', value: '₹4.8L', color: 'var(--info)' },
+                        ].map((s, i) => (
+                            <div key={i} className="card p-5">
+                                <p className="text-xs uppercase" style={{color: 'var(--text-muted)'}}>{s.label}</p>
+                                <p className="text-2xl font-bold mt-1" style={{color: s.color}}>{s.value}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-1" style={{background: 'var(--surface)', borderRadius: '8px', padding: '4px', display: 'inline-flex'}}>
+                        {['invoices', 'gst', 'tds', 'compliance'].map(t => (
+                            <button
+                                key={t}
+                                onClick={() => setTab(t)}
+                                className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${tab === t ? 'btn-primary' : ''}`}
+                                style={tab === t ? {} : {color: 'var(--text-muted)'}}
+                            >
+                                {t.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+
+                    {tab === 'invoices' && (
+                        <div className="card overflow-hidden">
+                            <div className="p-4 border-b flex items-center justify-between" style={{borderColor: 'var(--border)'}}>
+                                <h3 className="font-semibold" style={{color: 'var(--text-primary)'}}>All Invoices</h3>
+                                <button className="btn btn-primary text-xs">+ New Invoice</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr style={{background: 'var(--surface)'}}>
+                                        <th>Invoice #</th>
+                                        <th>Client</th>
+                                        <th>Amount</th>
+                                        <th>GST</th>
+                                        <th>TDS</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {invoices.map(inv => (
+                                        <tr key={inv.id}>
+                                            <td className="font-mono text-sm" style={{color: 'var(--text-primary)'}}>{inv.id}</td>
+                                            <td style={{color: 'var(--text-primary)'}}>{inv.client}</td>
+                                            <td style={{color: 'var(--text-primary)'}}>{inv.amount}</td>
+                                            <td style={{color: 'var(--text-muted)'}}>{inv.gst}</td>
+                                            <td style={{color: 'var(--text-muted)'}}>{inv.tds}</td>
+                                            <td>
+                                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                                    inv.status === 'paid' ? 'badge-success' : 
+                                                    inv.status === 'pending' ? 'badge-warning' : 'badge-error'
+                                                }`}>
+                                                    {inv.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button className="btn btn-secondary text-xs">View</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function AIView() {
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-4 gap-4">
+                        {[
+                            { label: 'AI Tasks Today', value: '1,247', color: 'var(--primary)', sub: '+23% vs yesterday' },
+                            { label: 'Human Reviews', value: '342', color: 'var(--success)', sub: '27% review rate' },
+                            { label: 'Hallucination Flags', value: '12', color: 'var(--warning)', sub: '0.96% flag rate' },
+                            { label: 'Avg Response', value: '2.3s', color: 'var(--info)', sub: '-18% improvement' },
+                        ].map((s, i) => (
+                            <div key={i} className="card p-5">
+                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>{s.label}</p>
+                                <p className="text-2xl font-bold mt-1" style={{color: s.color}}>{s.value}</p>
+                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>{s.sub}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="card p-6">
+                            <h3 className="font-semibold mb-4" style={{color: 'var(--text-primary)'}}>AI vs Human Effort Ratio</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-sm" style={{color: 'var(--text-primary)'}}>AI Generated</span>
+                                        <span className="text-sm font-semibold" style={{color: 'var(--primary)'}}>68%</span>
+                                    </div>
+                                    <div className="h-3 rounded-full overflow-hidden" style={{background: 'var(--bg)'}}>
+                                        <div className="h-full rounded-full" style={{width: '68%', background: 'var(--primary)'}}></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-sm" style={{color: 'var(--text-primary)'}}>Human Created</span>
+                                        <span className="text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>32%</span>
+                                    </div>
+                                    <div className="h-3 rounded-full overflow-hidden" style={{background: 'var(--bg)'}}>
+                                        <div className="h-full rounded-full" style={{width: '32%', background: 'var(--text-secondary)'}}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-6 p-4 rounded-lg" style={{background: 'var(--bg)', border: '1px solid var(--border)'}}>
+                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>
+                                    <span style={{color: 'var(--success)', fontWeight: 600}}>Time Saved:</span> AI has saved approximately <span style={{color: 'var(--text-primary)', fontWeight: 600}}>420 hours</span> of manual work this month.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="card p-6">
+                            <h3 className="font-semibold mb-4" style={{color: 'var(--text-primary)'}}>AI Governance Rules</h3>
+                            <div className="space-y-3">
+                                {[
+                                    { client: 'TechCorp India', rule: 'Full AI Allowed', status: 'active' },
+                                    { client: 'EduLearn Academy', rule: 'Human Review Required', status: 'active' },
+                                    { client: 'Govt Client X', rule: 'No AI Content', status: 'active' },
+                                ].map((r, i) => (
+                                    <div key={i} className="p-3 rounded-lg flex items-center justify-between" style={{background: 'var(--bg)', border: '1px solid var(--border)'}}>
+                                        <div>
+                                            <p className="text-sm font-medium" style={{color: 'var(--text-primary)'}}>{r.client}</p>
+                                            <p className="text-xs" style={{color: 'var(--primary)'}}>{r.rule}</p>
+                                        </div>
+                                        <span className="w-2 h-2 rounded-full" style={{background: 'var(--success)'}}></span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [view, setView] = useState('dashboard');
+            
+            const views = {
+                dashboard: { title: 'Command Center', subtitle: 'Real-time business health dashboard', component: Dashboard },
+                clients: { title: 'Clients', subtitle: 'Single source of truth for all clients', component: ClientsView },
+                work: { title: 'Work & Delivery', subtitle: 'Programs, projects, and deliverables', component: () => <div className="card p-8 text-center"><p style={{color: 'var(--text-muted)'}}>Work & Delivery module - Tree view with projects and tasks</p></div> },
+                people: { title: 'People', subtitle: 'Workforce OS - 900+ team members', component: PeopleView },
+                finance: { title: 'Finance & Compliance', subtitle: 'Invoices, GST, TDS, accounting', component: FinanceView },
+                sales: { title: 'Sales & Growth', subtitle: 'CRM, leads, deals, revenue engine', component: SalesView },
+                ai: { title: 'AI & Automation', subtitle: 'AI governance and automation control', component: AIView },
+            };
+
+            const Current = views[view]?.component || Dashboard;
+
+            return (
+                <div className="flex min-h-screen">
+                    <Sidebar currentView={view} setView={setView} />
+                    <div className="flex-1 ml-64">
+                        <Header title={views[view]?.title} subtitle={views[view]?.subtitle} />
+                        <main className="p-6">
+                            <Current />
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

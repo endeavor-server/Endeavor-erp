@@ -1,0 +1,227 @@
+# Self-hosted Supabase for Endeavor CRM
+# Deploy to Coolify with this compose file
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: supabase/postgres:15.1.1.78
+    container_name: endeavor-crm-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - endeavor-network
+
+  # Supabase Auth (GoTrue)
+  auth:
+    image: supabase/gotrue:v2.158.1
+    container_name: endeavor-crm-auth
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres?sslmode=disable
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:5176}
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@endeavor.in
+      GOTRUE_SMTP_HOST: mail
+      GOTRUE_SMTP_PORT: 2500
+      GOTRUE_SMTP_USER: admin
+      GOTRUE_SMTP_PASS: admin
+      GOTRUE_SMTP_SENDER_NAME: admin
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_INVITE: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_RECOVERY: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: "/auth/v1/verify"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - endeavor-network
+
+  # PostgREST
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: endeavor-crm-rest
+    environment:
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres?sslmode=disable
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_OPENAPI_SERVER_PROXY_URI: ${API_EXTERNAL_URL:-http://localhost:8000}
+    depends_on:
+      - db
+    networks:
+      - endeavor-network
+
+  # Realtime
+  realtime:
+    image: supabase/realtime:v2.33.58
+    container_name: endeavor-crm-realtime
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: postgres
+      DB_SSL: "false"
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      SECRET_KEY_BASE: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      ERL_AFLAGS: "-proto_dist inet_tcp"
+      FLY_ALLOC_ID: abc123
+      FLY_APP_NAME: realtime
+      FLY_REGION: local
+    depends_on:
+      - db
+    networks:
+      - endeavor-network
+
+  # Storage
+  storage:
+    image: supabase/storage-api:v1.11.7
+    container_name: endeavor-crm-storage
+    environment:
+      ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MjI4MDAwfQ.test}
+      SERVICE_KEY: ${SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMTUyMjgwMDB9.test}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres?sslmode=disable
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - storage-data:/var/lib/storage
+    depends_on:
+      - db
+      - rest
+    networks:
+      - endeavor-network
+
+  # Meta (for managing Postgres)
+  meta:
+    image: supabase/postgres-meta:v0.84.2
+    container_name: endeavor-crm-meta
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      - db
+    networks:
+      - endeavor-network
+
+  # Supabase Studio (UI)
+  studio:
+    image: supabase/studio:20240722.1
+    container_name: endeavor-crm-studio
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DEFAULT_ORGANIZATION: Endeavor Academy
+      DEFAULT_PROJECT: Endeavor CRM
+      OPENAI_API_KEY: ""
+      SITE_URL: ${SITE_URL:-http://localhost:5176}
+      SUPABASE_PUBLIC_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+      SUPABASE_URL: http://kong:8000
+    ports:
+      - "3001:3000"
+    depends_on:
+      - meta
+      - db
+    networks:
+      - endeavor-network
+
+  # Kong API Gateway
+  kong:
+    image: kong:2.8.1
+    container_name: endeavor-crm-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./kong.yml:/home/kong/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    depends_on:
+      - auth
+      - rest
+      - realtime
+      - storage
+      - meta
+    networks:
+      - endeavor-network
+
+  # SMTP Mail Server (for auth emails)
+  mail:
+    image: axllent/mailpit:v1.19
+    container_name: endeavor-crm-mail
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    volumes:
+      - mail-data:/data
+    networks:
+      - endeavor-network
+
+  # CRM Frontend
+  crm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${API_EXTERNAL_URL:-http://localhost:8000}
+        - VITE_SUPABASE_ANON_KEY=${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MjI4MDAwfQ.test}
+    container_name: endeavor-crm-app
+    environment:
+      - VITE_SUPABASE_URL=${API_EXTERNAL_URL:-http://localhost:8000}
+      - VITE_SUPABASE_ANON_KEY=${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MjI4MDAwfQ.test}
+    ports:
+      - "80:80"
+    depends_on:
+      - kong
+    networks:
+      - endeavor-network
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  storage-data:
+  mail-data:
+
+networks:
+  endeavor-network:
+    driver: bridge

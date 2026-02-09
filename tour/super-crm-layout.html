@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endeavor SUPER CRM - Layout</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 40px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 16px;
+        }
+        .header h1 { font-size: 42px; margin-bottom: 16px; }
+        .header p { font-size: 18px; opacity: 0.9; }
+        
+        .section { margin-bottom: 48px; }
+        .section-title {
+            font-size: 28px;
+            color: #1e3a5f;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .card h3 {
+            font-size: 20px;
+            color: #1e3a5f;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-list { list-style: none; }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .feature-list li:last-child { border-bottom: none; }
+        .check { color: #10b981; font-weight: bold; }
+        
+        .workforce-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+        }
+        .workforce-card.employees { border-left-color: #3b82f6; }
+        .workforce-card.contractors { border-left-color: #8b5cf6; }
+        .workforce-card.freelancers { border-left-color: #10b981; }
+        .workforce-card.vendors { border-left-color: #f59e0b; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-purple { background: #ede9fe; color: #5b21b6; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-orange { background: #ffedd5; color: #92400e; }
+        
+        .invoice-center {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 32px 0;
+        }
+        .invoice-center h2 {
+            font-size: 28px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        .invoice-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .invoice-type {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .invoice-type h4 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #60a5fa;
+        }
+        .invoice-type p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .module-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .module-header {
+            padding: 24px;
+            color: white;
+        }
+        .module-header.hr { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .module-header.crm { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .module-header.sheets { background: linear-gradient(135deg, #10b981, #059669); }
+        .module-header.accounting { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .module-header h3 { font-size: 22px; margin-bottom: 8px; }
+        .module-body { padding: 24px; }
+        
+        .nav-preview {
+            background: #1e3a5f;
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 24px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .nav-section { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 16px 0 8px 16px; }
+        
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .stat-pill {
+            background: white;
+            border-radius: 50px;
+            padding: 16px 28px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .stat-number { font-size: 28px; font-weight: 700; color: #1e3a5f; }
+        .stat-label { font-size: 13px; color: #64748b; }
+        
+        .flow-diagram {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        .flow-step {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            margin: 8px;
+        }
+        .flow-box {
+            background: #f1f5f9;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            min-width: 140px;
+        }
+        .flow-arrow { color: #3b82f6; font-size: 24px; }
+        
+        .highlight-box {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .highlight-box h4 { color: #1e40af; margin-bottom: 8px; }
+        
+        @media (max-width: 1024px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .invoice-types { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Endeavor SUPER CRM</h1>
+            <p>All-in-One Business Operating System | Workforce + Sales + Accounting + AI</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-bar">
+            <div class="stat-pill">
+                <span class="stat-number">900+</span>
+                <span class="stat-label">Total Workforce</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-number">4</span>
+                <span class="stat-label">Worker Types</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-number">4</span>
+                <span class="stat-label">Invoice Types</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-number">4</span>
+                <span class="stat-label">Core Modules</span>
+            </div>
+        </div>
+
+        <!-- Main Navigation Preview -->
+        <div class="section">
+            <h2 class="section-title">📍 Main Navigation Structure</h2>
+            <div class="grid-2">
+                <div class="nav-preview">
+                    <div class="nav-item">🏠 Dashboard</div>
+                    <div class="nav-section">Workforce</div>
+                    <div class="nav-item">👔 Full-time Employees</div>
+                    <div class="nav-item">📋 Contractors</div>
+                    <div class="nav-item">🎨 Freelancers (600+)</div>
+                    <div class="nav-item">🚚 Vendors</div>
+                    <div class="nav-section">Sales</div>
+                    <div class="nav-item">🎯 Leads & CRM</div>
+                    <div class="nav-item">🤖 AI Assistant</div>
+                    <div class="nav-section">Finance</div>
+                    <div class="nav-item">🧾 Auto-Invoice Center</div>
+                    <div class="nav-item">📊 Accounting & GST</div>
+                </div>
+                <div class="card">
+                    <h3>🎯 System Architecture</h3>
+                    <div class="flow-diagram" style="padding: 20px;">
+                        <div style="margin-bottom: 16px;">
+                            <span class="flow-box" style="background: #dbeafe;">Endeavor CRM</span>
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                            <span class="flow-box" style="background: #d1fae5;">Workforce Hub</span>
+                            <span class="flow-box" style="background: #ede9fe;">Sales CRM</span>
+                            <span class="flow-box" style="background: #ffedd5;">Invoicing</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <span class="flow-box" style="background: #fee2e2;">Google Sheets</span>
+                            <span class="flow-arrow">↔</span>
+                            <span class="flow-box" style="background: #e0e7ff;">WhatsApp</span>
+                            <span class="flow-arrow">↔</span>
+                            <span class="flow-box" style="background: #f3e8ff;">Tally</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workforce Hub -->
+        <div class="section">
+            <h2 class="section-title">👥 Workforce Hub</h2>
+            <div class="grid-4">
+                <div class="workforce-card employees">
+                    <h3>👔 Full-time Employees <span class="badge badge-blue">50-100</span></h3>
+                    <ul class="feature-list">
+                        <li><span class="check">✓</span> Monthly Payroll (₹50K-8L)</li>
+                        <li><span class="check">✓</span> Payslip PDF + Bank Transfer</li>
+                        <li><span class="check">✓</span> PF, PT, TDS, Form 16</li>
+                        <li><span class="check">✓</span> Benefits & Leaves</li>
+                        <li><span class="check">✓</span> Document Vault</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 16px;">
+                        <h4>💰 Payment Model</h4>
+                        <p>Fixed Monthly Salary</p>
+                    </div>
+                </div>
+
+                <div class="workforce-card contractors">
+                    <h3>📋 Contractors <span class="badge badge-purple">100-200</span></h3>
+                    <ul class="feature-list">
+                        <li><span class="check">✓</span> Contract Duration Tracking</li>
+                        <li><span class="check">✓</span> Monthly Fixed / Milestone</li>
+                        <li><span class="check">✓</span> Auto-Invoice Generation</li>
+                        <li><span class="check">✓</span> TDS @10% (if >₹30K/mo)</li>
+                        <li><span class="check">✓</span> Renewal/End Alerts</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 16px;">
+                        <h4>💰 Payment Model</h4>
+                        <p>Fixed Monthly or Project-based</p>
+                    </div>
+                </div>
+
+                <div class="workforce-card freelancers">
+                    <h3>🎨 Freelancers <span class="badge badge-green">600-700</span></h3>
+                    <ul class="feature-list">
+                        <li><span class="check">✓</span> Skill Profiles & Rates</li>
+                        <li><span class="check">✓</span> Time Tracking</li>
+                        <li><span class="check">✓</span> Milestone Submission</li>
+                        <li><span class="check">✓</span> Hours×Rate Auto-Calc</li>
+                        <li><span class="check">✓</span> Weekly/Bi-weekly Payouts</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 16px;">
+                        <h4>💰 Payment Model</h4>
+                        <p>Per Hour / Milestone / Deliverable</p>
+                    </div>
+                </div>
+
+                <div class="workforce-card vendors">
+                    <h3>🚚 Vendors <span class="badge badge-orange">50-100</span></h3>
+                    <ul class="feature-list">
+                        <li><span class="check">✓</span> Purchase Orders (PO)</li>
+                        <li><span class="check">✓</span> PO → Delivery → Invoice</li>
+                        <li><span class="check">✓</span> 3-Way Match Approval</li>
+                        <li><span class="check">✓</span> GST Input Credit Tracking</li>
+                        <li><span class="check">✓</span> Performance Ratings</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 16px;">
+                        <h4>💰 Payment Model</h4>
+                        <p>Per PO / Service Delivery</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Invoice Center -->
+        <div class="invoice-center">
+            <h2>🧾 Auto-Invoice Center</h2>
+            <div class="invoice-types">
+                <div class="invoice-type">
+                    <h4>1️⃣ Client Invoices (CRM → Customer)</h4>
+                    <p><strong>Trigger:</strong> Course enrollment / Deal closed</p>
+                    <p><strong>Auto-calc:</strong> Course fee + GST (CGST+SGST or IGST)</p>
+                    <p><strong>Flow:</strong> PDF → Email → WhatsApp → Payment reminder</p>
+                </div>
+                <div class="invoice-type">
+                    <h4>2️⃣ Freelancer Invoices (Freelancer → Endeavor)</h4>
+                    <p><strong>Trigger:</strong> Timesheet approved / Milestone delivered</p>
+                    <p><strong>Auto-calc:</strong> Hours×Rate OR Fixed amount</p>
+                    <p><strong>Tax:</strong> TDS 10% if >₹30K, GST if registered</p>
+                </div>
+                <div class="invoice-type">
+                    <h4>3️⃣ Contractor Invoices (Contractor → Endeavor)</h4>
+                    <p><strong>Trigger:</strong> Monthly cycle / Project milestone</p>
+                    <p><strong>Auto-calc:</strong> Contract amount</p>
+                    <p><strong>Tax:</strong> TDS 10% on professional fees</p>
+                </div>
+                <div class="invoice-type">
+                    <h4>4️⃣ Vendor Invoices (Vendor → Endeavor)</h4>
+                    <p><strong>Trigger:</strong> PO fulfillment / Service delivery</p>
+                    <p><strong>Auto-calc:</strong> PO amount + GST</p>
+                    <p><strong>TDS:</strong> 194C: 2%/5%, 194J: 10%</p>
+                </div>
+            </div>
+            <div style="margin-top: 32px; text-align: center;">
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 16px 32px; border-radius: 50px; margin: 0 8px;">📊 View Pending</span>
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 16px 32px; border-radius: 50px; margin: 0 8px;">⚡ Process Batch</span>
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 16px 32px; border-radius: 50px; margin: 0 8px;">📥 Export for Tally</span>
+            </div>
+        </div>
+
+        <!-- Core Modules -->
+        <div class="section">
+            <h2 class="section-title">🧩 Core Modules</h2>
+            <div class="grid-2">
+                <!-- Module 1: HR -->
+                <div class="module-card">
+                    <div class="module-header hr">
+                        <h3>👥 Module 1: Employee Management (HR)</h3>
+                        <p>Complete workforce lifecycle management</p>
+                    </div>
+                    <div class="module-body">
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> Onboarding workflow with checklist</li>
+                            <li><span class="check">✓</span> Employee profiles (CTC, department, contacts)</li>
+                            <li><span class="check">✓</span> Document vault (Aadhaar, PAN, encrypted)</li>
+                            <li><span class="check">✓</span> Payroll + auto-calc PF, PT, TDS</li>
+                            <li><span class="check">✓</span> Payslip PDF generation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Module 2: Sales CRM -->
+                <div class="module-card">
+                    <div class="module-header crm">
+                        <h3>🎯 Module 2: Sales CRM + AI Automation</h3>
+                        <p>AI-powered sales with WhatsApp integration</p>
+                    </div>
+                    <div class="module-body">
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> Leads / Contacts / Deals pipeline</li>
+                            <li><span class="check">✓</span> <strong>AI Email Generator</strong> (Kimi K2.5)</li>
+                            <li><span class="check">✓</span> AI WhatsApp message generation</li>
+                            <li><span class="check">✓</span> AI Pitch Assistant</li>
+                            <li><span class="check">✓</span> Email sequences & auto-follow-ups</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Module 3: Sheets Sync -->
+                <div class="module-card">
+                    <div class="module-header sheets">
+                        <h3>📊 Module 3: Google Sheets Sync</h3>
+                        <p>Bi-directional data synchronization</p>
+                    </div>
+                    <div class="module-body">
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> n8n integration</li>
+                            <li><span class="check">✓</span> Sheet ↔️ CRM field mapping</li>
+                            <li><span class="check">✓</span> Real-time webhooks</li>
+                            <li><span class="check">✓</span> Scheduled sync jobs</li>
+                            <li><span class="check">✓</span> Auto-export reports to sheets</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Module 4: Accounting -->
+                <div class="module-card">
+                    <div class="module-header accounting">
+                        <h3>💰 Module 4: Accounting + Indian GST</h3>
+                        <p>GST-compliant financial management</p>
+                    </div>
+                    <div class="module-body">
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> Invoicing with CGST/SGST/IGST auto-calc</li>
+                            <li><span class="check">✓</span> Employee expense reimbursements</li>
+                            <li><span class="check">✓</span> GSTR-1 / GSTR-3B prep</li>
+                            <li><span class="check">✓</span> JSON export for GST portal</li>
+                            <li><span class="check">✓</span> P&L, Balance Sheet reports</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Integration -->
+        <div class="section">
+            <h2 class="section-title">🤖 AI Integration Stack</h2>
+            <div class="card">
+                <div class="grid-2">
+                    <div>
+                        <h3>AI Model: Kimi K2.5 Cloud</h3>
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> API-based (no local GPU needed)</li>
+                            <li><span class="check">✓</span> Better performance than local Ollama</li>
+                            <li><span class="check">✓</span> Email drafting & personalization</li>
+                            <li><span class="check">✓</span> WhatsApp message generation</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>WhatsApp Integration</h3>
+                        <ul class="feature-list">
+                            <li><span class="check">✓</span> Using OpenClaw's WhatsApp channel</li>
+                            <li><span class="check">✓</span> Number: +91 87543 52776</li>
+                            <li><span class="check">✓</span> Direct message tool integration</li>
+                            <li><span class="check">✓</span> No separate WhatsApp Business API</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Freelancer Workflow -->
+        <div class="section">
+            <h2 class="section-title">🎨 Freelancer Management Workflow</h2>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <span class="flow-box">📋 Onboarding<br><small>Contract, NDA, Skills</small></span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-box">🎯 Project Assignment<br><small>Linked to Client Deal</small></span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-box">⏱️ Time/Milestone<br><small>Logging & Tracking</small></span>
+                </div>
+                <div style="margin: 16px 0;">
+                    <span class="flow-arrow">↓</span>
+                </div>
+                <div class="flow-step">
+                    <span class="flow-box">✅ Approval Workflow<br><small>Manager Review</small></span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-box">🧾 Auto-Invoice<br><small>Hours×Rate + GST</small></span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-box">💰 Batch Payment<br><small>Weekly/Bi-weekly</small></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax Summary -->
+        <div class="section">
+            <h2 class="section-title">📋 Tax & Compliance Summary</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>💸 TDS Deductions</h3>
+                    <table style="width: 100%; margin-top: 16px;">
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <th style="text-align: left; padding: 12px;">Worker Type</th>
+                            <th style="text-align: left; padding: 12px;">TDS Rate</th>
+                            <th style="text-align: left; padding: 12px;">Threshold</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">Contractors</td>
+                            <td style="padding: 12px;">10%</td>
+                            <td style="padding: 12px;">>₹30K/mo</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">Freelancers</td>
+                            <td style="padding: 12px;">10%</td>
+                            <td style="padding: 12px;">>₹30K</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">Vendors (194C)</td>
+                            <td style="padding: 12px;">2% / 5%</td>
+                            <td style="padding: 12px;">Per payment</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">Vendors (194J)</td>
+                            <td style="padding: 12px;">10%</td>
+                            <td style="padding: 12px;">Professional</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3>📑 Annual Compliance</h3>
+                    <ul class="feature-list">
+                        <li><span class="check">✓</span> <strong>Form 16:</strong> Full-time employees</li>
+                        <li><span class="check">✓</span> <strong>Form 16A:</strong> Contractors & Freelancers</li>
+                        <li><span class="check">✓</span> <strong>GSTR-1:</strong> Monthly sales return</li>
+                        <li><span class="check">✓</span> <strong>GSTR-3B:</strong> Monthly summary</li>
+                        <li><span class="check">✓</span> <strong>TDS Returns:</strong> 24Q, 26Q quarterly</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer CTA -->
+        <div style="text-align: center; padding: 40px; background: #1e3a5f; color: white; border-radius: 16px; margin-top: 48px;">
+            <h2 style="margin-bottom: 16px;">Ready to Build?</h2>
+            <p style="font-size: 18px; opacity: 0.9;">This comprehensive layout covers all 4 workforce types, 4 invoice flows, and 4 core modules.</p>
+            <p style="margin-top: 24px; font-size: 14px; opacity: 0.7;">Next: Choose a module to start development or modify any section.</p>
+        </div>
+    </div>
+</body>
+</html>
