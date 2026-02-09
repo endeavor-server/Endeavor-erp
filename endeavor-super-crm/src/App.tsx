@@ -1,53 +1,10 @@
-// Simple App - Debugging Version
+// Minimal Working App with Proper Imports
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/auth/Login';
 
-// Super simple auth context
-function useSimpleAuth() {
-  const [user, setUser] = useState<{email: string; role: string} | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('simple_auth_user');
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {}
-    }
-    setIsLoading(false);
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    const validUsers: Record<string, string> = {
-      'admin@endeavor.in': 'admin123',
-      'ops@endeavor.in': 'ops123',
-      'client@acme.com': 'client123',
-      'freelancer@dev.com': 'freelancer123',
-      'contractor@build.com': 'contractor123',
-      'vendor@supply.com': 'vendor123',
-    };
-
-    if (validUsers[email] === password) {
-      const user = { email, role: email.split('@')[0] };
-      localStorage.setItem('simple_auth_user', JSON.stringify(user));
-      setUser(user);
-      return { success: true };
-    }
-    return { success: false, error: 'Invalid credentials' };
-  };
-
-  const logout = () => {
-    localStorage.removeItem('simple_auth_user');
-    setUser(null);
-  };
-
-  return { user, isLoading, isAuthenticated: !!user, login, logout };
-}
-
-// Simple Dashboard
 function Dashboard() {
-  const { user, logout } = useSimpleAuth();
+  const { user, logout } = useAuth();
   
   return (
     <div style={{
@@ -114,7 +71,7 @@ function Dashboard() {
                 borderRadius: '12px',
                 backgroundColor: card.color,
                 marginBottom: '16px'
-              }} />
+              }}></div>
               <p style={{ color: '#94a3b8', marginBottom: '8px' }}>{card.title}</p>
               <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{card.value}</p>
             </div>
@@ -125,9 +82,8 @@ function Dashboard() {
   );
 }
 
-// App Wrapper
 function AppContent() {
-  const { user, isLoading, isAuthenticated } = useSimpleAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -138,7 +94,10 @@ function AppContent() {
         justifyContent: 'center',
         background: '#0f172a'
       }}>
-        <div style={{ color: '#94a3b8' }}>Loading...</div>
+        <div style={{ 
+          color: '#94a3b8',
+          fontSize: '18px'
+        }}>Loading...</div>
       </div>
     );
   }
@@ -161,7 +120,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
