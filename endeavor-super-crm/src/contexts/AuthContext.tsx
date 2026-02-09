@@ -1,109 +1,140 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { parseSupabaseError } from '../utils/dataIntegrity';
+import { env } from '../config/env';
 import type {
   User,
   UserRole,
   LoginCredentials,
   AuthState,
   Permission,
-  AuthAuditLog,
 } from '../types/auth';
 import { ROLE_PERMISSIONS, MODULE_ACCESS } from '../types/auth';
+
+// ============================================
+// MOCK AUTHENTICATION DATA
+// ============================================
+
+const MOCK_USERS: Record<string, { password: string; user: User }> = {
+  'admin@endeavor.in': {
+    password: 'admin123',
+    user: {
+      id: '1',
+      email: 'admin@endeavor.in',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+      organizationId: 'org-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  'ops@endeavor.in': {
+    password: 'ops123',
+    user: {
+      id: '2',
+      email: 'ops@endeavor.in',
+      firstName: 'Ops',
+      lastName: 'Manager',
+      role: 'endeavor_ops',
+      organizationId: 'org-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  'client@acme.com': {
+    password: 'client123',
+    user: {
+      id: '3',
+      email: 'client@acme.com',
+      firstName: 'Client',
+      lastName: 'User',
+      role: 'client',
+      organizationId: 'org-client-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  'freelancer@dev.com': {
+    password: 'freelancer123',
+    user: {
+      id: '4',
+      email: 'freelancer@dev.com',
+      firstName: 'Freelance',
+      lastName: 'Developer',
+      role: 'freelancer',
+      organizationId: 'org-fl-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  'contractor@build.com': {
+    password: 'contractor123',
+    user: {
+      id: '5',
+      email: 'contractor@build.com',
+      firstName: 'Contractor',
+      lastName: 'Builder',
+      role: 'contractor',
+      organizationId: 'org-cont-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+  'vendor@supply.com': {
+    password: 'vendor123',
+    user: {
+      id: '6',
+      email: 'vendor@supply.com',
+      firstName: 'Vendor',
+      lastName: 'Supplier',
+      role: 'vendor',
+      organizationId: 'org-vend-1',
+      isActive: true,
+      mfaEnabled: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  },
+};
 
 // ============================================
 // AUTH CONTEXT TYPE
 // ============================================
 
 interface AuthContextType extends AuthState {
-  // Actions
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
-
-  // Permission checks
   hasPermission: (permission: Permission) => boolean;
   hasAnyPermission: (permissions: Permission[]) => boolean;
   hasAllPermissions: (permissions: Permission[]) => boolean;
   canAccessModule: (module: string) => boolean;
-
-  // Role checks
   isAdmin: () => boolean;
   isOps: () => boolean;
   isExternal: () => boolean;
-
-  // Data filtering helpers
   getDataScope: () => 'own' | 'organization' | 'all';
-
-  // Loading state
   isRefreshing: boolean;
 }
 
-// ============================================
-// AUTH CONTEXT
-// ============================================
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// ============================================
-// MAP SUPABASE USER TO APP USER
-// ============================================
-
-function mapSupabaseUser(userData: {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    first_name?: string;
-    last_name?: string;
-    role?: string;
-    organization_id?: string;
-  };
-}): User {
-  return {
-    id: userData.id,
-    email: userData.email || '',
-    firstName: userData.user_metadata?.first_name || '',
-    lastName: userData.user_metadata?.last_name || '',
-    role: (userData.user_metadata?.role as UserRole) || 'freelancer',
-    organizationId: userData.user_metadata?.organization_id,
-    isActive: true,
-    mfaEnabled: false,
-    lastLoginAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-// ============================================
-// AUDIT LOG HELPER
-// ============================================
-
-async function logAuthEvent(
-  log: Omit<AuthAuditLog, 'id' | 'timestamp'>
-): Promise<void> {
-  const entry: AuthAuditLog = {
-    ...log,
-    id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-  };
-
-  try {
-    // Store to Supabase audit_logs table if available
-    await supabase.from('audit_logs').insert({
-      user_id: log.userId,
-      action: log.action,
-      entity_type: 'auth',
-      entity_id: log.userId,
-      old_data: { email: log.email, success: log.success },
-      new_data: log.details,
-    });
-  } catch {
-    // Silent fail - audit logging shouldn't break auth
-    console.warn('[AUTH AUDIT - Local]', entry);
-  }
-}
 
 // ============================================
 // USE AUTH HOOK
@@ -129,15 +160,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isMockAuth = env.VITE_ENABLE_MOCK_AUTH;
 
-  // Initialize auth state from Supabase session
+  // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
+        // Check for mock session
+        if (isMockAuth) {
+          const mockSession = localStorage.getItem('mock_session');
+          if (mockSession) {
+            const user = JSON.parse(mockSession) as User;
+            setState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            setState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+          }
+          return;
+        }
+
+        // Real Supabase auth
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error('Session error:', error);
@@ -151,26 +203,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (session?.user) {
-          // Fetch extended user profile from profiles table
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
           const user: User = {
             id: session.user.id,
             email: session.user.email || '',
-            firstName: profile?.first_name || session.user.user_metadata?.first_name || '',
-            lastName: profile?.last_name || session.user.user_metadata?.last_name || '',
-            avatar: profile?.avatar_url,
-            role: profile?.role || session.user.user_metadata?.role || 'freelancer',
-            organizationId: profile?.organization_id,
-            isActive: profile?.is_active !== false,
+            firstName: session.user.user_metadata?.first_name || '',
+            lastName: session.user.user_metadata?.last_name || '',
+            role: (session.user.user_metadata?.role as UserRole) || 'freelancer',
+            organizationId: session.user.user_metadata?.organization_id,
+            isActive: true,
             mfaEnabled: false,
-            lastLoginAt: profile?.last_login_at || new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
             createdAt: session.user.created_at || new Date().toISOString(),
-            updatedAt: profile?.updated_at || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           };
 
           setState({
@@ -199,57 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Fetch extended profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          firstName: profile?.first_name || session.user.user_metadata?.first_name || '',
-          lastName: profile?.last_name || session.user.user_metadata?.last_name || '',
-          avatar: profile?.avatar_url,
-          role: profile?.role || session.user.user_metadata?.role || 'freelancer',
-          organizationId: profile?.organization_id,
-          isActive: profile?.is_active !== false,
-          mfaEnabled: false,
-          lastLoginAt: new Date().toISOString(),
-          createdAt: session.user.created_at || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-      } else if (event === 'SIGNED_OUT') {
-        setState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
-      } else if (event === 'TOKEN_REFRESHED') {
-        // Session refreshed - no action needed
-        console.log('Token refreshed');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  }, [isMockAuth]);
 
   // Login function
   const login = useCallback(
@@ -257,29 +251,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
+        // Mock authentication
+        if (isMockAuth) {
+          const mockUser = MOCK_USERS[credentials.email.toLowerCase()];
+          
+          if (!mockUser || mockUser.password !== credentials.password) {
+            const errorMsg = 'Invalid email or password';
+            setState((prev) => ({
+              ...prev,
+              isLoading: false,
+              error: errorMsg,
+            }));
+            return { success: false, error: errorMsg };
+          }
+
+          const user = { ...mockUser.user, lastLoginAt: new Date().toISOString() };
+          localStorage.setItem('mock_session', JSON.stringify(user));
+
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+
+          return { success: true };
+        }
+
+        // Real Supabase auth
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,
         });
 
         if (error) {
-          const parsedError = parseSupabaseError(error as unknown as { code: string; message: string; details?: string });
-          const message = parsedError?.message || 'Invalid email or password';
-
-          await logAuthEvent({
-            userId: 'unknown',
-            email: credentials.email,
-            action: 'login_failed',
-            success: false,
-            details: { reason: error.code, message: error.message },
-          });
-
+          const message = error.message || 'Invalid email or password';
           setState((prev) => ({
             ...prev,
             isLoading: false,
             error: message,
           }));
-
           return { success: false, error: message };
         }
 
@@ -289,169 +300,130 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: errorMsg };
         }
 
-        // Update last login
-        await supabase
-          .from('profiles')
-          .update({ last_login_at: new Date().toISOString() })
-          .eq('id', data.user.id);
+        const user: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          firstName: data.user.user_metadata?.first_name || '',
+          lastName: data.user.user_metadata?.last_name || '',
+          role: (data.user.user_metadata?.role as UserRole) || 'freelancer',
+          organizationId: data.user.user_metadata?.organization_id,
+          isActive: true,
+          mfaEnabled: false,
+          lastLoginAt: new Date().toISOString(),
+          createdAt: data.user.created_at || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
 
-        await logAuthEvent({
-          userId: data.user.id,
-          email: credentials.email,
-          action: 'login',
-          success: true,
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
         });
 
-        // The user will be set by the onAuthStateChange listener
         return { success: true };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Login failed';
-
-        await logAuthEvent({
-          userId: 'unknown',
-          email: credentials.email,
-          action: 'login_failed',
-          success: false,
-          details: { reason: 'system_error', error: errorMessage },
-        });
-
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        return { success: false, error: errorMessage };
+        const errorMsg = error instanceof Error ? error.message : 'Login failed';
+        setState((prev) => ({ ...prev, isLoading: false, error: errorMsg }));
+        return { success: false, error: errorMsg };
       }
     },
-    []
+    [isMockAuth]
   );
 
   // Logout function
-  const logout = useCallback(async (): Promise<void> => {
-    const user = state.user;
-
-    if (user) {
-      await logAuthEvent({
-        userId: user.id,
-        email: user.email,
-        action: 'logout',
-        success: true,
+  const logout = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      if (isMockAuth) {
+        localStorage.removeItem('mock_session');
+      } else {
+        await supabase.auth.signOut();
+      }
+      
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
       });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsRefreshing(false);
     }
-
-    await supabase.auth.signOut();
-
-    setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-    });
-  }, [state.user]);
+  }, [isMockAuth]);
 
   // Refresh session
   const refreshSession = useCallback(async (): Promise<boolean> => {
-    if (isRefreshing) return false;
-
     setIsRefreshing(true);
-
     try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.refreshSession();
-
-      if (error || !session) {
-        console.error('Token refresh failed:', error);
-
-        await logAuthEvent({
-          userId: state.user?.id || 'unknown',
-          email: state.user?.email || 'unknown',
-          action: 'login_failed',
-          success: false,
-          details: { reason: 'token_refresh_failed' },
-        });
-
-        setIsRefreshing(false);
+      if (isMockAuth) {
+        const mockSession = localStorage.getItem('mock_session');
+        if (mockSession) {
+          const user = JSON.parse(mockSession) as User;
+          setState((prev) => ({ ...prev, user, isAuthenticated: true }));
+          return true;
+        }
         return false;
       }
 
-      await logAuthEvent({
-        userId: session.user.id,
-        email: session.user.email || '',
-        action: 'login',
-        success: true,
-      });
-
-      setIsRefreshing(false);
-      return true;
-    } catch (error) {
-      console.error('Token refresh error:', error);
-
-      await logAuthEvent({
-        userId: state.user?.id || 'unknown',
-        email: state.user?.email || 'unknown',
-        action: 'login_failed',
-        success: false,
-      });
-
-      setIsRefreshing(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        return true;
+      }
       return false;
+    } catch (error) {
+      console.error('Session refresh error:', error);
+      return false;
+    } finally {
+      setIsRefreshing(false);
     }
-  }, [isRefreshing, state.user]);
+  }, [isMockAuth]);
 
-  // Reset password
+  // Reset password (placeholder)
   const resetPassword = useCallback(
     async (email: string): Promise<{ success: boolean; error?: string }> => {
+      if (isMockAuth) {
+        return { success: true };
+      }
       try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
         if (error) {
           return { success: false, error: error.message };
         }
-
         return { success: true };
       } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Password reset failed',
-        };
+        return { success: false, error: 'Failed to send reset email' };
       }
     },
-    []
+    [isMockAuth]
   );
 
-  // Update password
+  // Update password (placeholder)
   const updatePassword = useCallback(
     async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
+      if (isMockAuth) {
+        return { success: true };
+      }
       try {
-        const { error } = await supabase.auth.updateUser({
-          password: newPassword,
-        });
-
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) {
           return { success: false, error: error.message };
         }
-
         return { success: true };
       } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Password update failed',
-        };
+        return { success: false, error: 'Failed to update password' };
       }
     },
-    []
+    [isMockAuth]
   );
 
-  // Permission checks
+  // Permission helpers
   const hasPermission = useCallback(
     (permission: Permission): boolean => {
       if (!state.user) return false;
-      const userPermissions = ROLE_PERMISSIONS[state.user.role];
+      const userPermissions = ROLE_PERMISSIONS[state.user.role] || [];
       return userPermissions.includes(permission);
     },
     [state.user]
@@ -480,27 +452,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [state.user]
   );
 
-  // Role checks
-  const isAdmin = useCallback((): boolean => {
-    return state.user?.role === 'admin';
-  }, [state.user]);
+  // Role check helpers
+  const isAdmin = useCallback(() => state.user?.role === 'admin', [state.user]);
+  const isOps = useCallback(() => state.user?.role === 'endeavor_ops', [state.user]);
+  const isExternal = useCallback(
+    () => ['client', 'freelancer', 'contractor', 'vendor'].includes(state.user?.role || ''),
+    [state.user]
+  );
 
-  const isOps = useCallback((): boolean => {
-    return state.user?.role === 'endeavor_ops';
-  }, [state.user]);
-
-  const isExternal = useCallback((): boolean => {
-    if (!state.user) return false;
-      return ['client', 'freelancer', 'contractor', 'vendor'].includes(state.user.role);
-  }, [state.user]);
-
-  // Data scope
+  // Data scope helper
   const getDataScope = useCallback((): 'own' | 'organization' | 'all' => {
     if (!state.user) return 'own';
-
-    if (state.user.role === 'admin') return 'all';
-    if (state.user.role === 'endeavor_ops') return 'organization';
-    return 'own';
+    
+    switch (state.user.role) {
+      case 'admin':
+      case 'endeavor_ops':
+        return 'all';
+      case 'client':
+        return 'organization';
+      default:
+        return 'own';
+    }
   }, [state.user]);
 
   const value: AuthContextType = {
@@ -524,37 +496,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// ============================================
-// DATA ACCESS HOOK
-// ============================================
-
-export function useDataAccess() {
-  const { user, getDataScope, canAccessModule } = useAuth();
-
-  const filterByAccess = useCallback(
-    <T extends { userId?: string; organizationId?: string; created_at?: string }>(data: T[]): T[] => {
-      const scope = getDataScope();
-
-      if (scope === 'all') return data;
-      if (scope === 'organization') {
-        return data.filter((item) => item.organizationId === user?.organizationId);
-      }
-      return data.filter((item) => item.userId === user?.id);
-    },
-    [getDataScope, user]
-  );
-
-  const filterActiveRecords = useCallback(
-    <T extends { is_active?: boolean; deleted_at?: string | null }>(data: T[]): T[] => {
-      return data.filter((item) => item.is_active !== false && !item.deleted_at);
-    },
-    []
-  );
-
-  return {
-    filterByAccess,
-    filterActiveRecords,
-    canAccessModule,
-    getDataScope,
-  };
-}
+export default AuthProvider;

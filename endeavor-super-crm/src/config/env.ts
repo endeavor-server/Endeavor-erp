@@ -54,6 +54,7 @@ const envSchema = z.object({
   // Development
   VITE_MOCK_API: booleanEnv(false),
   VITE_DEVTOOLS_ENABLED: booleanEnv(false),
+  VITE_ENABLE_MOCK_AUTH: booleanEnv(false),
 });
 
 // Type for the validated environment
@@ -83,6 +84,7 @@ function parseEnv(): Env {
       VITE_CACHE_DURATION: import.meta.env.VITE_CACHE_DURATION,
       VITE_MOCK_API: import.meta.env.VITE_MOCK_API,
       VITE_DEVTOOLS_ENABLED: import.meta.env.VITE_DEVTOOLS_ENABLED,
+      VITE_ENABLE_MOCK_AUTH: import.meta.env.VITE_ENABLE_MOCK_AUTH,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
