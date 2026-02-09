@@ -1,0 +1,216 @@
+import { defineConfig, type PluginOption } from 'vite';
+import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
+import path from 'path';
+
+// https://vite.dev/config/
+export default defineConfig(({ mode }) => {
+  const isProduction = mode === 'production';
+  const port = parseInt(process.env.PORT || '5176');
+  const previewPort = parseInt(process.env.PREVIEW_PORT || '4173');
+
+  // Base plugins
+  const plugins: PluginOption[] = [
+    react({
+      // Optimize React for production
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+    }),
+  ];
+
+  // Add bundle analyzer in analyze mode
+  if (process.env.ANALYZE === 'true') {
+    plugins.push(
+      visualizer({
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+        filename: 'dist/stats.html',
+      }) as PluginOption
+    );
+  }
+
+  return {
+    plugins,
+
+    // Resolve aliases
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@components': path.resolve(__dirname, './src/components'),
+        '@pages': path.resolve(__dirname, './src/pages'),
+        '@hooks': path.resolve(__dirname, './src/hooks'),
+        '@lib': path.resolve(__dirname, './src/lib'),
+        '@utils': path.resolve(__dirname, './src/utils'),
+        '@types': path.resolve(__dirname, './src/types'),
+        '@config': path.resolve(__dirname, './src/config'),
+        '@assets': path.resolve(__dirname, './src/assets'),
+      },
+    },
+
+    // Development server
+    server: {
+      port,
+      host: '0.0.0.0',
+      allowedHosts: true,
+      cors: {
+        origin: true,
+        credentials: true,
+      },
+      // HMR configuration
+      hmr: {
+        overlay: true,
+      },
+      // Proxy API requests (if needed)
+      proxy: isProduction
+        ? undefined
+        : {
+            '/api': {
+              target: process.env.API_URL || 'http://localhost:3000',
+              changeOrigin: true,
+              secure: false,
+            },
+          },
+    },
+
+    // Preview server (production build preview)
+    preview: {
+      port: previewPort,
+      host: '0.0.0.0',
+      allowedHosts: true,
+    },
+
+    // Build configuration
+    build: {
+      outDir: 'dist',
+      sourcemap: !isProduction, // Enable sourcemaps for debugging in dev/staging
+      minify: false,
+
+      // Terser options for production
+      terserOptions: isProduction
+        ? {
+            compress: {
+              drop_console: true,
+              drop_debugger: true,
+              pure_funcs: ['console.log', 'console.debug'],
+            },
+            format: {
+              comments: false,
+            },
+          }
+        : undefined,
+
+      // Chunking strategy for optimal caching
+      rollupOptions: {
+        output: {
+          // Manual chunks for better caching
+          manualChunks: {
+            // React vendor chunk
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // UI vendor chunk
+            'vendor-ui': [
+              '@headlessui/react',
+              'lucide-react',
+              'recharts',
+              'clsx',
+              'tailwind-merge',
+            ],
+            // Supabase chunk
+            'vendor-supabase': ['@supabase/supabase-js'],
+            // PDF/Document chunk (heavy)
+            'vendor-pdf': ['jspdf', 'html2canvas', 'pdf-lib'],
+            // Date utilities
+            'vendor-date': ['date-fns'],
+          },
+          // Naming pattern for chunks
+          chunkFileNames: isProduction
+            ? 'assets/js/[name]-[hash].js'
+            : 'assets/js/[name].js',
+          entryFileNames: isProduction
+            ? 'assets/js/[name]-[hash].js'
+            : 'assets/js/[name].js',
+          assetFileNames: (assetInfo) => {
+            const info = assetInfo.name?.split('.') || [];
+            const ext = info[info.length - 1];
+            if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name || '')) {
+              return 'assets/images/[name]-[hash][extname]';
+            }
+            if (/\.(woff2?|ttf|otf|eot)$/i.test(assetInfo.name || '')) {
+              return 'assets/fonts/[name]-[hash][extname]';
+            }
+            if (ext === 'css') {
+              return 'assets/css/[name]-[hash][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
+        },
+      },
+
+      // CSS optimization
+      cssMinify: isProduction,
+
+      // Asset handling
+      assetsInlineLimit: 4096, // Inline files < 4KB
+      emptyOutDir: true,
+
+      // Improve chunk loading
+      modulePreload: {
+        polyfill: true,
+      },
+
+      // Target modern browsers
+      target: 'esnext',
+    },
+
+    // CSS configuration
+    css: {
+      devSourcemap: !isProduction,
+      postcss: {
+        // PostCSS config is loaded from postcss.config.js
+      },
+    },
+
+    // Environment variables handling
+    define: {
+      // Global constants
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
+
+    // Optimize dependencies
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@supabase/supabase-js',
+        'date-fns',
+        'lucide-react',
+        'recharts',
+        'jspdf',
+        'html2canvas',
+      ],
+      exclude: [],
+    },
+
+    // Experimental features
+    experimental: {
+      // Enable faster builds
+      renderBuiltUrl: (filename, { hostType }) => {
+        if (hostType === 'js') {
+          return { runtime: `window.__assetsPath}/${filename}` };
+        }
+        return { relative: true };
+      },
+    },
+
+    // Esbuild configuration
+    esbuild: {
+      drop: isProduction ? ['console', 'debugger'] : [],
+      legalComments: 'none',
+    },
+
+    // Performance budget warnings
+    buildReport: true,
+  };
+});
