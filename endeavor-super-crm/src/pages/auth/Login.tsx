@@ -88,7 +88,7 @@ export default function Login() {
   };
 
   return (
-  <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4">
+  <div className="min-h-screen bg-gradient-to-br from-[#0E1117] via-[#111827] to-[#0E1117] flex items-center justify-center px-4 py-12">
     {/* Live regions for screen reader announcements */}
     <LoadingRegion isLoading={isSubmitting} message="Signing in, please wait" />
     <ErrorRegion message={error || authError || undefined} />
@@ -96,23 +96,23 @@ export default function Login() {
 
     <main className="max-w-md w-full" id="main-content" role="main" aria-label="Login page">
       {/* Logo */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-10">
         <div 
-          className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-[var(--primary)] to-purple-600 flex items-center justify-center"
+          className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-blue-500/20"
           aria-hidden="true"
         >
-          <span className="text-2xl font-bold text-white">E</span>
+          <span className="text-3xl font-bold text-white">E</span>
         </div>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
           Endeavor SUPER CRM
         </h1>
-        <p className="text-sm text-[var(--text-muted)] mt-1">
-          Business Operating System
+        <p className="text-sm text-[var(--text-muted)] mt-2 tracking-wide">
+          Enterprise Business Operating System
         </p>
       </div>
 
       {/* Login Card */}
-      <div className="card p-6" role="region" aria-label="Login form">
+      <div className="bg-[var(--surface)]/80 backdrop-blur-xl border border-[var(--border)] rounded-2xl p-8 shadow-2xl shadow-black/50" role="region" aria-label="Login form">
         {!showMFA ? (
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Form accessible with proper labels and error handling */}
@@ -163,12 +163,14 @@ export default function Login() {
             {/* Error display */}
             {(error || authError) && (
               <div 
-                className="p-3 bg-[var(--error-light)] border border-[var(--error)]/20 rounded-lg"
+                className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3"
                 role="alert"
                 aria-live="assertive"
               >
-                <p className="text-sm text-[var(--error)]">
-                  <span className="font-medium">Error: </span>
+                <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-red-400">
                   {error || authError}
                 </p>
               </div>
@@ -178,7 +180,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting || !email || !password}
-              className="btn btn-primary w-full justify-center"
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               aria-busy={isSubmitting}
             >
               {isSubmitting ? (
