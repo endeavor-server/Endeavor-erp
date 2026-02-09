@@ -4,8 +4,8 @@ import {
   IndianRupee, Clock8, MoreVertical, Filter, ChevronLeft, ChevronRight,
   Loader2, RefreshCw, Download
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { api, optimizedAPI } from '@/services/api';
+import { supabase } from '../../lib/supabase';
+import { api, optimizedAPI } from '../../services/api';
 import { 
   encodeCursor, 
   decodeCursor, 
@@ -13,9 +13,9 @@ import {
   selectFields,
   debounce,
   type PaginatedResult 
-} from '@/utils/pagination';
-import { useRenderPerformance } from '@/hooks/usePerformance';
-import { VirtualizedList } from '@/components/virtualized';
+} from '../../utils/pagination';
+import { useRenderPerformance } from '../../hooks/usePerformance';
+import { VirtualizedList } from '../../components/virtualized';
 
 // ============================================
 // Types

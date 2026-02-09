@@ -3,11 +3,13 @@
  * Visually hidden but accessible to assistive technologies
  */
 
-import type { ReactNode, CSSProperties } from 'react';
+import type { ReactNode, CSSProperties, ElementType } from 'react';
+
+type HTMLIntrinsicElements = 'span' | 'div' | 'p' | 'label' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
 interface ScreenReaderOnlyProps {
   children: ReactNode;
-  as?: keyof JSX.IntrinsicElements;
+  as?: HTMLIntrinsicElements;
   id?: string;
 }
 

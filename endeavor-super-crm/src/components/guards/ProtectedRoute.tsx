@@ -5,7 +5,7 @@
 import React from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Permission, UserRole } from '../../types/auth';
+import type { Permission, UserRole } from '../../types/auth';
 
 interface ProtectedRouteProps {
   // Module this route belongs to (for module-level access control)

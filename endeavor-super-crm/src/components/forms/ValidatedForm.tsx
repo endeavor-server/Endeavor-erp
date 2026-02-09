@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, FormEvent } from 'react';
+import { useState, useCallback, useEffect, type FormEvent } from 'react';
 import { z } from 'zod';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { formatZodError } from '../../lib/validation';
@@ -71,20 +71,20 @@ export function useValidatedForm<T extends Record<string, unknown>>(
 
   const validateFieldValue = useCallback(
     (field: keyof T, value: unknown): string | undefined => {
+      // Try to validate with a partial schema using the full form validation
       try {
-        const fieldSchema = schema.shape?.[field as string];
-        if (fieldSchema) {
-          fieldSchema.parse(value);
-        }
+        const partialValues = { ...values, [field]: value };
+        schema.parse(partialValues);
         return undefined;
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return error.errors[0]?.message;
+          const fieldError = error.issues.find(issue => issue.path[0] === field);
+          return fieldError?.message;
         }
         return 'Invalid value';
       }
     },
-    [schema]
+    [schema, values]
   );
 
   const validateFormValues = useCallback(

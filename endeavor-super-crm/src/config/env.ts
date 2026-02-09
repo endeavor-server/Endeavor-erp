@@ -5,6 +5,20 @@
 
 import { z } from 'zod';
 
+// Helper for boolean env vars - returns boolean type
+const booleanEnv = (defaultValue: boolean = false) => {
+  return z.union([z.literal('true'), z.literal('false')])
+    .default(defaultValue ? 'true' : 'false')
+    .transform(val => val === 'true');
+};
+
+// Helper for number env vars - returns number type
+const numberEnv = (defaultValue: number) => {
+  return z.string()
+    .default(String(defaultValue))
+    .transform(val => Number(val));
+};
+
 // Define the environment schema
 const envSchema = z.object({
   // Required
@@ -17,15 +31,15 @@ const envSchema = z.object({
   VITE_APP_ENV: z.enum(['development', 'staging', 'production']).default('production'),
 
   // Security
-  VITE_SECURITY_HEADERS_ENABLED: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
+  VITE_SECURITY_HEADERS_ENABLED: booleanEnv(true),
   VITE_CSP_MODE: z.enum(['strict', 'relaxed', 'none']).default('strict'),
   VITE_CORS_ORIGINS: z.string().default('*'),
 
   // Features
-  VITE_FEATURE_AI_ASSISTANT: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
-  VITE_FEATURE_REALTIME: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
-  VITE_FEATURE_REPORTS: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
-  VITE_FEATURE_EXPORTS: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
+  VITE_FEATURE_AI_ASSISTANT: booleanEnv(true),
+  VITE_FEATURE_REALTIME: booleanEnv(true),
+  VITE_FEATURE_REPORTS: booleanEnv(true),
+  VITE_FEATURE_EXPORTS: booleanEnv(true),
 
   // Monitoring
   VITE_SENTRY_DSN: z.string().optional(),
@@ -33,13 +47,13 @@ const envSchema = z.object({
   VITE_LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'none']).default('warn'),
 
   // Performance
-  VITE_API_TIMEOUT: z.string().transform(Number).default('30000'),
-  VITE_ENABLE_CACHE: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
-  VITE_CACHE_DURATION: z.string().transform(Number).default('5'),
+  VITE_API_TIMEOUT: numberEnv(30000),
+  VITE_ENABLE_CACHE: booleanEnv(true),
+  VITE_CACHE_DURATION: numberEnv(5),
 
   // Development
-  VITE_MOCK_API: z.enum(['true', 'false']).transform(val => val === 'true').default('false'),
-  VITE_DEVTOOLS_ENABLED: z.enum(['true', 'false']).transform(val => val === 'true').default('false'),
+  VITE_MOCK_API: booleanEnv(false),
+  VITE_DEVTOOLS_ENABLED: booleanEnv(false),
 });
 
 // Type for the validated environment
@@ -72,7 +86,7 @@ function parseEnv(): Env {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missing = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('\n  - ');
+      const missing = error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join('\n  - ');
       throw new Error(
         `Environment validation failed:\n  - ${missing}\n\n` +
         `Please check your .env file and ensure all required variables are set.\n` +

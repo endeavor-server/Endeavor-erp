@@ -1,7 +1,7 @@
 // Layout Component - App Shell Wrapper
 // Provides consistent header, sidebar, and main content area
 
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';

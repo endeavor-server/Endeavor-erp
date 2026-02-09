@@ -142,10 +142,6 @@ export function Layout() {
     );
   };
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
   // Get user initials
   const getInitials = () => {
     if (!user) return '??';

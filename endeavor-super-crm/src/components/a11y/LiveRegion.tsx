@@ -29,7 +29,7 @@ export function LiveRegion({
   children,
   politeness = 'polite',
   atomic = true,
-  relevant = 'additions text',
+  relevant = 'additions',
   id,
   className = '',
 }: LiveRegionProps) {

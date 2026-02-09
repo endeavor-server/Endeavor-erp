@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types/auth';
+import type { UserRole } from '../../types/auth';
 import { ScreenReaderOnly } from '../../components/a11y/ScreenReaderOnly';
 import { LiveRegion, ErrorRegion } from '../../components/a11y/LiveRegion';
 import { LoadingRegion } from '../../components/a11y/LiveRegion';

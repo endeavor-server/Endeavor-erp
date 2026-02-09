@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const previewPort = parseInt(process.env.PREVIEW_PORT || '4173');
 
   // Base plugins
-  const plugins: Plugin[] = [
+  const plugins: PluginOption[] = [
     react({
       // Optimize React for production
       jsxRuntime: 'automatic',
@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
         gzipSize: true,
         brotliSize: true,
         filename: 'dist/stats.html',
-      }) as Plugin
+      }) as PluginOption
     );
   }
 

@@ -81,27 +81,53 @@ export function calculateTDS(input: TDSCalculationInput): TDSCalculationResult {
 
   // Determine rate based on section and party type
   switch (section) {
-    case '194C':
+    case '194C': {
+      const data194C = sectionData as typeof TDS_SECTIONS['194C'];
       tdsRate = (partyType === 'individual' || partyType === 'huf') 
-        ? sectionData.individualRate 
-        : sectionData.companyRate;
-      threshold = sectionData.threshold;
+        ? data194C.individualRate 
+        : data194C.companyRate;
+      threshold = data194C.threshold;
       break;
+    }
     
-    case '194J':
+    case '194J': {
+      const data194J = sectionData as typeof TDS_SECTIONS['194J'];
       if (isProfessional) {
-        tdsRate = sectionData.professionalRate;
+        tdsRate = data194J.professionalRate;
       } else if (isTechnical) {
-        tdsRate = sectionData.technicalRate;
+        tdsRate = data194J.technicalRate;
       } else {
-        tdsRate = sectionData.professionalRate;
+        tdsRate = data194J.professionalRate;
       }
-      threshold = sectionData.threshold;
+      threshold = data194J.threshold;
       break;
+    }
+    
+    case '194H': {
+      const data194H = sectionData as typeof TDS_SECTIONS['194H'];
+      tdsRate = data194H.rate;
+      threshold = data194H.threshold;
+      break;
+    }
+    
+    case '194I': {
+      const data194I = sectionData as typeof TDS_SECTIONS['194I'];
+      // Default to land/building rate
+      tdsRate = data194I.landBuildingRate;
+      threshold = data194I.threshold;
+      break;
+    }
+    
+    case '194A': {
+      const data194A = sectionData as typeof TDS_SECTIONS['194A'];
+      tdsRate = data194A.rate;
+      threshold = data194A.threshold;
+      break;
+    }
     
     default:
-      tdsRate = sectionData.rate || sectionData.companyRate || 10;
-      threshold = sectionData.threshold || 30000;
+      tdsRate = 10;
+      threshold = 30000;
   }
 
   // Apply higher rate if PAN not provided

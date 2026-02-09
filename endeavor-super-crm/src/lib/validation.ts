@@ -499,7 +499,7 @@ export type CompanyConfigFormData = z.infer<typeof companyConfigSchema>;
 
 export function formatZodError(error: z.ZodError): Record<string, string> {
   const formatted: Record<string, string> = {};
-  error.errors.forEach((err) => {
+  error.issues.forEach((err) => {
     const path = err.path.join('.');
     formatted[path] = err.message;
   });
